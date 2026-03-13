@@ -1,0 +1,60 @@
+public class Scenario {
+
+    private final ScenarioEventStore store;
+    private final List<EventExpectation<?>> expectations = new ArrayList<>();
+
+    public Scenario(ScenarioEventStore store) { this.store = store; }
+
+    public <T> EventExpectation<T> expect(Class<T> type) {
+        EventExpectation<T> exp = new EventExpectation<>(store, type);
+        expectations.add(exp);
+        return exp;
+    }
+
+    /** Sequential verify */
+    public void verify() {
+        Awaitility.await().atMost(Duration.ofSeconds(30))
+                .untilAsserted(() -> expectations.forEach(EventExpectation::verify));
+    }
+
+    /** Parallel verify */
+    public void verifyParallel() {
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure<Void>()) {
+            for (EventExpectation<?> e : expectations) {
+                scope.fork(() -> { e.verify(); return null; });
+            }
+            scope.join();
+            scope.throwIfFailed();
+        } catch (Exception ex) {
+            throw new AssertionError("Verification failed", ex);
+        }
+    }
+}
+
+public class EventExpectation<T> {
+
+    private final ScenarioEventStore store;
+    private final Class<T> type;
+    private String correlationId;
+    private int expectedCount = 1;
+    private Predicate<T> predicate = t -> true;
+
+    public EventExpectation(ScenarioEventStore store, Class<T> type) {
+        this.store = store;
+        this.type = type;
+    }
+
+    public EventExpectation<T> withCorrelation(String id) { this.correlationId = id; return this; }
+    public EventExpectation<T> matching(Predicate<T> p) { this.predicate = p; return this; }
+    public EventExpectation<T> times(int n) { this.expectedCount = n; return this; }
+
+    public void verify() {
+        List<T> events = correlationId == null ? store.find(type) : store.findByCorrelation(type, correlationId);
+        long matches = events.stream().filter(predicate).count();
+        if (matches < expectedCount) {
+            throw new AssertionError(
+                "Expected " + expectedCount + " " + type.getSimpleName() + " events but got " + matches
+            );
+        }
+    }
+}
