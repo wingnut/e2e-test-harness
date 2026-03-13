@@ -1,0 +1,22 @@
+@KafkaScenarioTest
+class FileUploadE2ETest {
+
+    @Test
+    void concurrent_file_uploads(KafkaScenario scenario, PojoKafkaScenarioExtension ext) {
+
+        String topic = ext.getTopic();
+        String fileA = UUID.randomUUID().toString();
+        String fileB = UUID.randomUUID().toString();
+        String fileC = UUID.randomUUID().toString();
+
+        scenario.stimulateParallel(
+            () -> scenario.publish(topic, fileA, new FileUploadStarted(fileA)),
+            () -> scenario.publish(topic, fileB, new FileUploadStarted(fileB)),
+            () -> scenario.publish(topic, fileC, new FileUploadStarted(fileC))
+        )
+        .expect(FileReady.class).withCorrelation(fileA)
+        .expect(FileReady.class).withCorrelation(fileB)
+        .expect(FileReady.class).withCorrelation(fileC)
+        .verifyParallel();
+    }
+}
