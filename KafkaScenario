@@ -1,0 +1,35 @@
+public class KafkaScenario {
+
+    private final Producer<String, Object> producer;
+    private final ScenarioEventStore store;
+
+    public KafkaScenario(Producer<String, Object> producer, ScenarioEventStore store) {
+        this.producer = producer;
+        this.store = store;
+    }
+
+    /** Sequential flow (classic) */
+    public Scenario stimulate(Runnable stimulus) {
+        stimulus.run();
+        return new Scenario(store);
+    }
+
+    /** Parallel flow: each Runnable runs concurrently */
+    public Scenario stimulateParallel(Runnable... stimuli) {
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure<Void>()) {
+            for (Runnable r : stimuli) {
+                scope.fork(() -> { r.run(); return null; });
+            }
+            scope.join();
+            scope.throwIfFailed();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return new Scenario(store);
+    }
+
+    /** Publish an event */
+    public void publish(String topic, String correlationId, Object event) {
+        producer.send(new ProducerRecord<>(topic, correlationId, event));
+    }
+}
