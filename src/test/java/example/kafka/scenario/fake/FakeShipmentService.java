@@ -1,13 +1,13 @@
-package example.kafka.scenario;
+package example.kafka.scenario.fake;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 /**
  * Test double: reacts to "order-persisted" events and emits "shipment-created" to the same topic.
  */
-class FakeShipmentService extends AbstractFakeKafkaService {
+public class FakeShipmentService extends AbstractFakeKafkaService {
 
-    FakeShipmentService(String topic) {
+    public FakeShipmentService(String topic) {
         super(topic, "fake-shipment-service");
     }
 

@@ -38,6 +38,8 @@ Internal types (in `example.kafka.scenario.internal`, not part of the public API
 
 JUnit integration lives in `example.kafka.scenario.junit`: **KafkaScenarioExtension**, **KafkaScenarioTest**. The root `scenario` package stays focused on the DSL (Scenario, Triggered, AwaitingEvent, ObservedState).
 
+Test doubles used by the example tests live in `example.kafka.scenario.fake` (test source): **AbstractFakeKafkaService**, **FakeOrderService**, **FakeShipmentService**.
+
 ---
 
 ## 3. Simplification options

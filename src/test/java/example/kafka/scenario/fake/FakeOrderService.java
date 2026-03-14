@@ -1,13 +1,13 @@
-package example.kafka.scenario;
+package example.kafka.scenario.fake;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 /**
  * Test double: reacts to "order-placed" events and emits "order-persisted" to the same topic.
  */
-class FakeOrderService extends AbstractFakeKafkaService {
+public class FakeOrderService extends AbstractFakeKafkaService {
 
-    FakeOrderService(String topic) {
+    public FakeOrderService(String topic) {
         super(topic, "fake-order-service");
     }
 

@@ -1,5 +1,7 @@
 package example.kafka.scenario;
 
+import example.kafka.scenario.fake.FakeOrderService;
+import example.kafka.scenario.fake.FakeShipmentService;
 import example.kafka.scenario.junit.KafkaScenarioTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

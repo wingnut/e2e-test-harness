@@ -1,4 +1,4 @@
-package example.kafka.scenario;
+package example.kafka.scenario.fake;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
  * Base for test-double services that consume from a topic and produce a response
  * when a record matches a trigger prefix. Subclasses define the trigger and response.
  */
-abstract class AbstractFakeKafkaService {
+public abstract class AbstractFakeKafkaService {
 
     private final String topic;
     private final KafkaConsumer<String, String> consumer;
