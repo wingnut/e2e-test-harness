@@ -1,5 +1,6 @@
 package example.kafka.scenario;
 
+import example.kafka.scenario.junit.KafkaScenarioTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -231,7 +232,7 @@ class KafkaScenarioExampleTest {
     }
 
     /**
-     * Illustrates {@link EventWaitBuilder#withDeduplicationId(String)}: explicitly filter
+     * Illustrates {@link AwaitingEvent#withDeduplicationId(String)}: explicitly filter
      * the awaited event by deduplication id (e.g. when correlating with a specific flow).
      */
     @Test

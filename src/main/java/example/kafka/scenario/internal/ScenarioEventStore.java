@@ -1,10 +1,13 @@
-package example.kafka.scenario;
+package example.kafka.scenario.internal;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
-class ScenarioEventStore {
+/**
+ * Internal: per-scenario event capture for the DSL. Not part of the public API.
+ */
+public final class ScenarioEventStore {
 
     private final List<ScenarioEvent> events = new CopyOnWriteArrayList<>();
 
@@ -12,7 +15,8 @@ class ScenarioEventStore {
         events.add(new ScenarioEvent(topic, deduplicationId, payload));
     }
 
-    <T> List<T> find(Class<T> type) {
+    /** Used by {@link example.kafka.scenario.AwaitingEvent} to resolve matching events. */
+    public <T> List<T> find(Class<T> type) {
         return events.stream()
                 .map(ScenarioEvent::payload)
                 .filter(type::isInstance)
@@ -20,7 +24,8 @@ class ScenarioEventStore {
                 .collect(Collectors.toList());
     }
 
-    <T> List<T> findByDeduplicationId(Class<T> type, String deduplicationId) {
+    /** Used by {@link example.kafka.scenario.AwaitingEvent} to resolve events by deduplication id. */
+    public <T> List<T> findByDeduplicationId(Class<T> type, String deduplicationId) {
         return events.stream()
                 .filter(e -> deduplicationId.equals(e.deduplicationId()))
                 .map(ScenarioEvent::payload)
@@ -31,4 +36,3 @@ class ScenarioEventStore {
 
     record ScenarioEvent(String topic, String deduplicationId, Object payload) {}
 }
-

@@ -48,8 +48,8 @@ So you can write: `scenario.stimulate(...).withTimeout(...).publish(...)`.
 
 If a method returns a *new* type, that type can expose only the operations that are valid *after* that step.
 
-- After `publish()`, you get a `PublishedScenario`: it only offers “wait for event” and “wait for state change,” not “publish again” (unless you add it).
-- After `andWaitForEventOfType()`, you get an `EventWaitBuilder`: it only offers “withDeduplicationId,” “matching,” and “toArriveAndVerify.”
+- After `publish()`, you get a `Triggered`: it only offers “wait for event” and “wait for state change,” not “publish again” (unless you add it).
+- After `andWaitForEventOfType()`, you get an `AwaitingEvent`: it only offers “withDeduplicationId,” “matching,” and “toArriveAndVerify.”
 
 So the **return type** encodes “where you are” in the flow. Invalid next steps simply don’t exist on that type, so the API “guides” the caller and avoids nonsense sequences.
 
@@ -61,8 +61,8 @@ So the **return type** encodes “where you are” in the flow. Invalid next ste
 
 In a DSL, you often introduce small types that don’t do much logic; they mainly **hold context** for the next step and delegate to shared infrastructure.
 
-- `PublishedScenario` holds: “which scenario” and “which deduplication id we just used.” The real work (store, timeout, Awaitility) lives in `Scenario` or shared helpers; `PublishedScenario` just passes that context into `EventWaitBuilder` or state-change logic.
-- `EventWaitBuilder` holds: event type, optional dedup id, predicate. It then calls the scenario’s store and timeout when you call `toArriveAndVerify`.
+- `Triggered` holds: “which scenario” and “which deduplication id we just used.” The real work (store, timeout, Awaitility) lives in `Scenario` or shared helpers; `Triggered` just passes that context into `AwaitingEvent` or state-change logic.
+- `AwaitingEvent` holds: event type, optional dedup id, predicate. It then calls the scenario’s store and timeout when you call `toArriveAndVerify`.
 
 So “wiring up” a DSL is largely: **split the journey into stages, give each stage a type, and have each type carry the context needed for the next verb.**
 
@@ -106,9 +106,9 @@ Chains often end with a method that returns `void`: e.g. `toArriveAndVerify(...)
 
 ## 7. In this project
 
-- **Scenario:** entry point; returns `this` for `stimulate`, `withTimeout`, `stimulateParallel`; returns `PublishedScenario` for `publish`; also exposes `andWaitForEventOfType` / `andWaitForStateChange` (no publish) so you can do “stimulate then wait.”
-- **PublishedScenario:** post-publish stage; only “andWaitForEventOfType” and “andWaitForStateChange”; delegates to scenario’s store and timeout.
-- **EventWaitBuilder:** “wait for event” stage; only “withDeduplicationId,” “matching,” “toArriveAndVerify”; ends with void.
-- **StateChangeResult:** “state change result” stage; only “andVerify”; ends with void.
+- **Scenario:** entry point; returns `this` for `stimulate`, `withTimeout`, `stimulateParallel`; returns `Triggered` for `publish`; also exposes `andWaitForEventOfType` / `andWaitForStateChange` (no publish) so you can do “stimulate then wait.”
+- **Triggered:** something was triggered (e.g. publish); only “andWaitForEventOfType” and “andWaitForStateChange”; delegates to scenario’s store and timeout.
+- **AwaitingEvent:** “awaiting event” stage; only “withDeduplicationId,” “matching,” “toArriveAndVerify”; ends with void.
+- **ObservedState:** observed state (e.g. from polling); only “andVerify”; ends with void.
 
 That’s the same style: **fluent chaining + staged return types + small context objects + void at the end.**

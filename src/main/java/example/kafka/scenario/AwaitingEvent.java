@@ -7,23 +7,23 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Fluent builder for waiting for an event of a given type and then verifying it,
- * mimicking Modulith's {@code andWaitForEventOfType(...).matching(...).toArriveAndVerify(...)}.
+ * Stage of the scenario DSL where we await an event of a given type, optionally narrow by deduplication id
+ * or predicate, then verify it. Mimics Modulith's {@code andWaitForEventOfType(...).matching(...).toArriveAndVerify(...)}.
  */
-public final class EventWaitBuilder<T> {
+public final class AwaitingEvent<T> {
 
     private final Scenario scenario;
     private final String deduplicationId;
     private final Class<T> type;
     private Predicate<T> predicate = t -> true;
 
-    EventWaitBuilder(Scenario scenario, String deduplicationId, Class<T> type) {
+    AwaitingEvent(Scenario scenario, String deduplicationId, Class<T> type) {
         this.scenario = scenario;
         this.deduplicationId = deduplicationId;
         this.type = type;
     }
 
-    private EventWaitBuilder(Scenario scenario, String deduplicationId, Class<T> type, Predicate<T> predicate) {
+    private AwaitingEvent(Scenario scenario, String deduplicationId, Class<T> type, Predicate<T> predicate) {
         this.scenario = scenario;
         this.deduplicationId = deduplicationId;
         this.type = type;
@@ -33,15 +33,15 @@ public final class EventWaitBuilder<T> {
     /**
      * Restrict to events with this deduplication id (e.g. the one used in the preceding publish).
      */
-    public EventWaitBuilder<T> withDeduplicationId(String id) {
-        return new EventWaitBuilder<>(scenario, id, type, predicate);
+    public AwaitingEvent<T> withDeduplicationId(String id) {
+        return new AwaitingEvent<>(scenario, id, type, predicate);
     }
 
     /**
      * Restrict to events matching the given predicate.
      */
-    public EventWaitBuilder<T> matching(Predicate<T> p) {
-        return new EventWaitBuilder<>(scenario, deduplicationId, type, p);
+    public AwaitingEvent<T> matching(Predicate<T> p) {
+        return new AwaitingEvent<>(scenario, deduplicationId, type, p);
     }
 
     /**

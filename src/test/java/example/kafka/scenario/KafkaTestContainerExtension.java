@@ -8,7 +8,7 @@ import org.testcontainers.utility.DockerImageName;
 /**
  * JUnit 5 extension that starts an Apache Kafka (native) Testcontainer and exposes its
  * bootstrap servers via the {@code KAFKA_BOOTSTRAP} system property so
- * that {@link KafkaScenarioExtension} will connect to it.
+ * that {@link example.kafka.scenario.junit.KafkaScenarioExtension} will connect to it.
  * Uses {@code apache/kafka-native} for faster startup (~2–3 s) than JVM-based images.
  */
 public class KafkaTestContainerExtension implements BeforeAllCallback {

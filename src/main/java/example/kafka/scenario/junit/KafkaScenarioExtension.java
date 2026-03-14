@@ -1,5 +1,8 @@
-package example.kafka.scenario;
+package example.kafka.scenario.junit;
 
+import example.kafka.scenario.Scenario;
+import example.kafka.scenario.internal.ScenarioEventStore;
+import example.kafka.scenario.internal.ScenarioKafkaConsumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -15,7 +18,7 @@ import java.util.UUID;
 
 /**
  * JUnit 5 extension that provisions a per-test Kafka topic, producer and
- * internal consumer-backed {@link ScenarioEventStore}, then injects a
+ * internal consumer-backed event store, then injects a
  * {@link Scenario} instance into test methods.
  */
 public class KafkaScenarioExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
@@ -83,4 +86,3 @@ public class KafkaScenarioExtension implements BeforeEachCallback, AfterEachCall
         return props;
     }
 }
-

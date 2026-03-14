@@ -1,4 +1,4 @@
-package example.kafka.scenario;
+package example.kafka.scenario.internal;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -11,19 +11,23 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-class ScenarioKafkaConsumer {
+/**
+ * Internal: consumes from the scenario topic and records events into {@link ScenarioEventStore}.
+ * Not part of the public API.
+ */
+public final class ScenarioKafkaConsumer {
 
     private final KafkaConsumer<String, String> consumer;
     private final ScenarioEventStore store;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    ScenarioKafkaConsumer(Properties props, ScenarioEventStore store, String topic) {
+    public ScenarioKafkaConsumer(Properties props, ScenarioEventStore store, String topic) {
         this.consumer = new KafkaConsumer<>(props);
         this.store = store;
         consumer.subscribe(List.of(topic));
     }
 
-    void start() {
+    public void start() {
         executor.submit(() -> {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
@@ -39,9 +43,8 @@ class ScenarioKafkaConsumer {
         });
     }
 
-    void stop() {
+    public void stop() {
         consumer.wakeup();
         executor.shutdownNow();
     }
 }
-

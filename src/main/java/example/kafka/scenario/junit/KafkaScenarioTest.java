@@ -1,5 +1,6 @@
-package example.kafka.scenario;
+package example.kafka.scenario.junit;
 
+import example.kafka.scenario.Scenario;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.lang.annotation.ElementType;
@@ -17,4 +18,3 @@ import java.lang.annotation.Target;
 @ExtendWith(KafkaScenarioExtension.class)
 public @interface KafkaScenarioTest {
 }
-
