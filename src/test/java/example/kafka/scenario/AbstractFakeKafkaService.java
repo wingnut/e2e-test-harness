@@ -17,38 +17,39 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Simple test-local "order service" that reacts to "order-placed" events
- * and emits "shipment-created" events to the same topic.
- *
- * This is intentionally minimal and only meant to demonstrate how the
- * KafkaScenario harness can be used for richer end-to-end style tests.
+ * Base for test-double services that consume from a topic and produce a response
+ * when a record matches a trigger prefix. Subclasses define the trigger and response.
  */
-class OrderService {
+abstract class AbstractFakeKafkaService {
 
     private final String topic;
     private final KafkaConsumer<String, String> consumer;
     private final Producer<String, String> producer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    OrderService(String topic) {
+    protected AbstractFakeKafkaService(String topic, String groupId) {
         this.topic = topic;
-        this.consumer = new KafkaConsumer<>(consumerProps());
+        this.consumer = new KafkaConsumer<>(consumerProps(groupId));
         this.producer = new KafkaProducer<>(producerProps());
         this.consumer.subscribe(List.of(topic));
     }
 
-    void start() {
+    /** Message value prefix this service reacts to (e.g. "order-placed:"). */
+    protected abstract String getTriggerPrefix();
+
+    /** Build the outbound message value for a matching record (key is preserved). */
+    protected abstract String buildResponsePayload(ConsumerRecord<String, String> record);
+
+    public final void start() {
         executor.submit(() -> {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
-                    ConsumerRecords<String, String> records =
-                            consumer.poll(Duration.ofMillis(200));
+                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(200));
                     for (ConsumerRecord<String, String> record : records) {
                         String value = record.value();
-                        if (value != null && value.startsWith("order-placed:")) {
-                            String deduplicationId = record.key();
-                            String payload = "shipment-created:" + deduplicationId;
-                            producer.send(new ProducerRecord<>(topic, deduplicationId, payload));
+                        if (value != null && value.startsWith(getTriggerPrefix())) {
+                            String payload = buildResponsePayload(record);
+                            producer.send(new ProducerRecord<>(topic, record.key(), payload));
                         }
                     }
                 }
@@ -60,7 +61,7 @@ class OrderService {
         });
     }
 
-    void stop() {
+    public final void stop() {
         consumer.wakeup();
         executor.shutdownNow();
     }
@@ -70,7 +71,7 @@ class OrderService {
                 System.getenv().getOrDefault("KAFKA_BOOTSTRAP", "localhost:9092"));
     }
 
-    private Properties producerProps() {
+    private static Properties producerProps() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrap());
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
@@ -80,10 +81,10 @@ class OrderService {
         return props;
     }
 
-    private Properties consumerProps() {
+    private static Properties consumerProps(String groupId) {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrap());
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "order-service");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                 "org.apache.kafka.common.serialization.StringDeserializer");
@@ -92,4 +93,3 @@ class OrderService {
         return props;
     }
 }
-

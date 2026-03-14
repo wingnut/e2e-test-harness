@@ -80,5 +80,29 @@ class KafkaScenarioExampleTest {
                     assertTrue(event.contains(deduplicationId));
                 });
     }
+
+    /**
+     * Longer flow: order-placed → FakeOrderService → order-persisted → FakeShipmentService → shipment-created.
+     * Test publishes only the first event and waits for the final one.
+     */
+    @Test
+    void order_placed_leads_to_order_persisted_then_shipment_created(Scenario scenario) {
+        FakeOrderService orderService = new FakeOrderService(scenario.topicName());
+        FakeShipmentService shipmentService = new FakeShipmentService(scenario.topicName());
+        orderService.start();
+        shipmentService.start();
+
+        String deduplicationId = UUID.randomUUID().toString();
+
+        scenario
+                .publish(deduplicationId, "order-placed:" + deduplicationId)
+                .andWaitForEventOfType(String.class)
+                .matching(s -> s.contains("shipment-created"))
+                .toArriveAndVerify(event ->
+                        assertTrue(event.contains("shipment-created") && event.contains(deduplicationId)));
+
+        orderService.stop();
+        shipmentService.stop();
+    }
 }
 
