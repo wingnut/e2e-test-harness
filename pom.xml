@@ -13,7 +13,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
-        <kafka.clients.version>3.8.0</kafka.clients.version>
+        <kafka.clients.version>3.9.1</kafka.clients.version>
         <awaitility.version>4.2.0</awaitility.version>
     </properties>
 
