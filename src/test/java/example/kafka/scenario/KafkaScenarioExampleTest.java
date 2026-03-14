@@ -131,6 +131,45 @@ class KafkaScenarioExampleTest {
     }
 
     /**
+     * Stimulate then wait for event (no publish in the chain). The stimulus starts the fakes
+     * and publishes an event; the scenario then waits for the resulting shipment-created.
+     */
+    @Test
+    void stimulate_then_andWaitForEventOfType(Scenario scenario) {
+        FakeOrderService orderService = new FakeOrderService(scenario.topicName());
+        FakeShipmentService shipmentService = new FakeShipmentService(scenario.topicName());
+        String orderId = UUID.randomUUID().toString();
+
+        scenario
+                .stimulate(() -> {
+                    orderService.start();
+                    shipmentService.start();
+                    scenario.publish(orderId, "order-placed:" + orderId);
+                })
+                .andWaitForEventOfType(String.class)
+                .matching(s -> s.contains("shipment-created") && s.contains(orderId))
+                .toArriveAndVerify(event -> assertTrue(event.contains("shipment-created") && event.contains(orderId)));
+
+        orderService.stop();
+        shipmentService.stop();
+    }
+
+    /**
+     * Stimulate then wait for state change (no publish). The stimulus schedules a "batch job"
+     * that writes a result; the scenario then polls until that result appears.
+     */
+    @Test
+    void stimulate_then_andWaitForStateChange(Scenario scenario) {
+        List<String> batchResult = new CopyOnWriteArrayList<>();
+
+        scenario
+                .stimulate(() -> Executors.newSingleThreadScheduledExecutor()
+                        .schedule(() -> batchResult.add("done"), 150, TimeUnit.MILLISECONDS))
+                .andWaitForStateChange(() -> new ArrayList<>(batchResult), list -> !list.isEmpty())
+                .andVerify(list -> assertEquals("done", list.get(0)));
+    }
+
+    /**
      * Illustrates {@link Scenario#stimulateParallel(Runnable...)}: "poke at the system" with
      * multiple actions in parallel (e.g. upload files to S3, call external APIs) before
      * the main scenario flow. Here we simulate an upload bucket: one file first, then

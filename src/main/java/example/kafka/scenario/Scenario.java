@@ -7,6 +7,8 @@ import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Scenario DSL entry point, Modulith-style: publish then andWaitForEventOfType / andWaitForStateChange.
@@ -85,6 +87,32 @@ public class Scenario {
     public PublishedScenario publish(String deduplicationId, String event) {
         producer.send(new ProducerRecord<>(topic, deduplicationId, event));
         return new PublishedScenario(this, deduplicationId);
+    }
+
+    /**
+     * Wait for an event of the given type (no prior publish). Use after {@link #stimulate(Runnable)}
+     * when the stimulus causes something else to publish (e.g. call an API that emits an event).
+     * Events are matched without a deduplication id filter; use {@link EventWaitBuilder#withDeduplicationId(String)}
+     * or {@link EventWaitBuilder#matching(Predicate)} to narrow.
+     */
+    public <T> EventWaitBuilder<T> andWaitForEventOfType(Class<T> type) {
+        return new EventWaitBuilder<>(this, null, type);
+    }
+
+    /**
+     * Wait for a state change (no prior publish). Use after {@link #stimulate(Runnable)} when the
+     * stimulus triggers an async update (e.g. a batch job) and you poll until a condition holds.
+     */
+    public <T> StateChangeResult<T> andWaitForStateChange(Supplier<T> stateSupplier, Predicate<T> until) {
+        return new PublishedScenario(this, null).andWaitForStateChange(stateSupplier, until);
+    }
+
+    /**
+     * Run a state supplier once and verify (no prior publish). Use after {@link #stimulate(Runnable)}
+     * when the stimulus returns or produces the state directly.
+     */
+    public <T> StateChangeResult<T> andWaitForStateChange(Supplier<T> stateChange) {
+        return new PublishedScenario(this, null).andWaitForStateChange(stateChange);
     }
 }
 
