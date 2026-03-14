@@ -31,6 +31,14 @@ public class Scenario {
         this.topic = topic;
     }
 
+    ScenarioEventStore store() {
+        return store;
+    }
+
+    Duration timeout() {
+        return timeout;
+    }
+
     /**
      * Expose the underlying Kafka topic name for this scenario.
      * Useful for wiring test-local components that should participate
@@ -76,9 +84,11 @@ public class Scenario {
 
     /**
      * Publish an event to the scenario topic with the given deduplication id as key.
+     * Returns a fluent API for Modulith-style andWaitForStateChange / andWaitForEventOfType.
      */
-    public void publish(String deduplicationId, String event) {
+    public PublishedScenario publish(String deduplicationId, String event) {
         producer.send(new ProducerRecord<>(topic, deduplicationId, event));
+        return new PublishedScenario(this, deduplicationId);
     }
 
     /**
