@@ -2,25 +2,21 @@ package example.kafka.scenario;
 
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.awaitility.Awaitility;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * Scenario DSL entry point, similar to Spring Modulith's Scenario API
- * but backed by Kafka as the event bus.
+ * Scenario DSL entry point, Modulith-style: publish then andWaitForEventOfType / andWaitForStateChange.
+ * Backed by Kafka as the event bus.
  */
 public class Scenario {
 
     private final Producer<String, String> producer;
     private final ScenarioEventStore store;
     private final String topic;
-    private final List<EventExpectation<?>> expectations = new CopyOnWriteArrayList<>();
     private Duration timeout = Duration.ofSeconds(30);
 
     Scenario(Producer<String, String> producer,
@@ -89,41 +85,6 @@ public class Scenario {
     public PublishedScenario publish(String deduplicationId, String event) {
         producer.send(new ProducerRecord<>(topic, deduplicationId, event));
         return new PublishedScenario(this, deduplicationId);
-    }
-
-    /**
-     * Register an expectation for events of the given type.
-     */
-    public <T> EventExpectation<T> expect(Class<T> type) {
-        EventExpectation<T> exp = new EventExpectation<>(store, type);
-        expectations.add(exp);
-        return exp;
-    }
-
-    /**
-     * Sequential verification of all expectations with Awaitility.
-     */
-    public void verify() {
-        Awaitility.await()
-                .atMost(timeout)
-                .untilAsserted(() -> expectations.forEach(EventExpectation::verify));
-    }
-
-    /**
-     * Parallel verification of all expectations.
-     */
-    public void verifyParallel() {
-        ExecutorService executor = Executors.newFixedThreadPool(expectations.size());
-        try {
-            for (EventExpectation<?> expectation : expectations) {
-                Future<?> f = executor.submit(expectation::verify);
-                f.get();
-            }
-        } catch (Exception ex) {
-            throw new AssertionError("Parallel verification failed", ex);
-        } finally {
-            executor.shutdownNow();
-        }
     }
 }
 

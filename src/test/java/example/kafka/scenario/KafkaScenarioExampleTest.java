@@ -22,14 +22,13 @@ class KafkaScenarioExampleTest {
         String deduplicationId = UUID.randomUUID().toString();
 
         scenario
-                .stimulate(() ->
-                        scenario.publish(deduplicationId, "order-placed:" + deduplicationId))
-                .expect(String.class)
-                .withDeduplicationId(deduplicationId)
+                .publish(deduplicationId, "order-placed:" + deduplicationId)
+                .andWaitForEventOfType(String.class)
                 .matching(s -> s.contains("order-placed"))
-                .times(1);
-
-        scenario.verify();
+                .toArriveAndVerify(event -> {
+                    assertTrue(event.contains("order-placed"));
+                    assertTrue(event.contains(deduplicationId));
+                });
     }
 
     /**

@@ -19,25 +19,6 @@ class OrderFlowScenarioTest {
         String deduplicationId = UUID.randomUUID().toString();
 
         scenario
-                .stimulate(() ->
-                        scenario.publish(deduplicationId, "order-placed:" + deduplicationId))
-                .expect(String.class)
-                .withDeduplicationId(deduplicationId)
-                .matching(s -> s.contains("shipment-created"))
-                .times(1);
-
-        scenario.verify();
-        service.stop();
-    }
-
-    @Test
-    void order_leads_to_shipment_event_modulith_style(Scenario scenario) {
-        OrderService service = new OrderService(scenario.topicName());
-        service.start();
-
-        String deduplicationId = UUID.randomUUID().toString();
-
-        scenario
                 .publish(deduplicationId, "order-placed:" + deduplicationId)
                 .andWaitForEventOfType(String.class)
                 .matching(s -> s.contains("shipment-created"))
