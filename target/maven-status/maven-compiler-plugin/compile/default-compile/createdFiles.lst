@@ -1,7 +1,0 @@
-example/kafka/scenario/KafkaScenarioExtension.class
-example/kafka/scenario/KafkaScenarioTest.class
-example/kafka/scenario/EventExpectation.class
-example/kafka/scenario/ScenarioEventStore$ScenarioEvent.class
-example/kafka/scenario/ScenarioEventStore.class
-example/kafka/scenario/ScenarioKafkaConsumer.class
-example/kafka/scenario/Scenario.class

@@ -1,4 +1,0 @@
-example/kafka/scenario/OrderService.class
-example/kafka/scenario/OrderFlowScenarioTest.class
-example/kafka/scenario/KafkaTestContainerExtension.class
-example/kafka/scenario/KafkaScenarioExampleTest.class
